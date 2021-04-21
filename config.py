@@ -1,8 +1,8 @@
 # paths
-TOKENIZER_PATH = '/run/media/holmium/DATA/TwitterPLM/tokenizer/'
-RAW_DATA_PATH = '/run/media/holmium/DATA/TwitterPLM/data/'
-MODEL_PATH = '/run/media/holmium/DATA/TwitterPLM/model/'
-CHECKPOINT_PATH = '/run/media/holmium/DATA/TwitterPLM/checkpoint/'
+TOKENIZER_PATH = './tokenizer/'
+RAW_DATA_PATH = './data/'
+MODEL_PATH = './model/'
+CHECKPOINT_PATH = './checkpoint/'
 
 # tokens
 BOS_TOKEN = '<s>'
@@ -21,9 +21,9 @@ SPECIAL_TOKENS = [
 ]
 
 # hyper params
-VOCAB_SIZE = 5_000
+VOCAB_SIZE = 30522
 MIN_FREQUENCY = 2
-HIDDEN_SIZE = 20
-NUM_HIDDEN_LAYERS = 2
-NUM_ATTENTION_HEADS = 3
-MAX_LEN = 64
+HIDDEN_SIZE = 768
+NUM_HIDDEN_LAYERS = 12
+NUM_ATTENTION_HEADS = 12
+MAX_LEN =512
