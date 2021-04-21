@@ -31,6 +31,7 @@ from typing import Optional
 from datasets import load_dataset
 
 import transformers
+import config as cg
 from transformers import (
     CONFIG_MAPPING,
     MODEL_FOR_MASKED_LM_MAPPING,
@@ -42,10 +43,10 @@ from transformers import (
     Trainer,
     TrainingArguments,
     set_seed,
+    RobertaTokenizerFast
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
-
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.5.0")
@@ -65,7 +66,7 @@ class ModelArguments:
         default=None,
         metadata={
             "help": "The model checkpoint for weights initialization."
-            "Don't set if you want to train a model from scratch."
+                    "Don't set if you want to train a model from scratch."
         },
     )
     model_type: Optional[str] = field(
@@ -94,7 +95,7 @@ class ModelArguments:
         default=False,
         metadata={
             "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
-            "with private models)."
+                    "with private models)."
         },
     )
 
@@ -129,7 +130,7 @@ class DataTrainingArguments:
         default=None,
         metadata={
             "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated."
+                    "than this will be truncated."
         },
     )
     preprocessing_num_workers: Optional[int] = field(
@@ -147,21 +148,21 @@ class DataTrainingArguments:
         default=False,
         metadata={
             "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch."
+                    "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
     max_train_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+                    "value if set."
         },
     )
     max_val_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of validation examples to this "
-            "value if set."
+                    "value if set."
         },
     )
 
@@ -289,9 +290,18 @@ def main():
         "use_auth_token": True if model_args.use_auth_token else None,
     }
     if model_args.tokenizer_name:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.tokenizer_name, **tokenizer_kwargs)
-    elif model_args.model_name_or_path:
-        tokenizer = AutoTokenizer.from_pretrained(model_args.model_name_or_path, **tokenizer_kwargs)
+        tokenizer = RobertaTokenizerFast(
+            os.path.join(model_args.tokenizer_name, 'vocab.json'),
+            os.path.join(model_args.tokenizer_name, 'merges.txt'),
+            bos_token=cg.BOS_TOKEN,
+            eos_token=cg.EOS_TOKEN,
+            sep_token=cg.SEP_TOKEN,
+            cls_token=cg.CLS_TOKEN,
+            unk_token=cg.UNK_TOKEN,
+            pad_token=cg.PAD_TOKEN,
+            mask_token=cg.MASK_TOKEN,
+            max_len=cg.MAX_LEN
+        )
     else:
         raise ValueError(
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
@@ -387,7 +397,7 @@ def main():
             total_length = (total_length // max_seq_length) * max_seq_length
             # Split by chunks of max_len.
             result = {
-                k: [t[i : i + max_seq_length] for i in range(0, total_length, max_seq_length)]
+                k: [t[i: i + max_seq_length] for i in range(0, total_length, max_seq_length)]
                 for k, t in concatenated_examples.items()
             }
             return result
