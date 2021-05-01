@@ -14,7 +14,7 @@
              --per_device_train_batch_size 4 \
              --seed 42 \
              --do_train \
-             --tokenizer_name bertweet \
+             --tokenizer_name vinai/bertweet-base \
              --max_seq_length 512 \
              --evaluation_strategy epoch \
              --num_train_epochs 20 \
