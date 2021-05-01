@@ -7,7 +7,7 @@
 #SBATCH --output=train_bertweet.out
 #SBATCH --get-user-env
 
-./run_mlm.py \
+./run_mlm_bertweet.py \
              --model_type roberta \
              --output_dir ../bertweet-v1/ \
              --train_file ../bertweet_data/train_data.txt \
@@ -16,7 +16,7 @@
              --do_train \
              --tokenizer_name vinai/bertweet-base \
              --max_seq_length 512 \
-             --evaluation_strategy epoch \
              --num_train_epochs 20 \
              --save_steps 50000 \
+             --cache_dir ../.cache \
              --fp16
