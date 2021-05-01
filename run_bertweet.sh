@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
 #SBATCH --job-name=bertweet
-#SBATCH --gres=gpu:8
+#SBATCH --gres=gpu:rtx:8
 #SBATCH --output=train_bertweet.out
 #SBATCH --get-user-env
 
