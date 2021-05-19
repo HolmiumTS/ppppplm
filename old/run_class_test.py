@@ -38,14 +38,13 @@ from transformers import (
     Trainer,
     TrainingArguments,
     default_data_collator,
-    set_seed,
+    set_seed, GPT2TokenizerFast,
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
 
-
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
-check_min_version("4.7.0.dev0")
+check_min_version("4.5.0")
 
 task_to_keys = {
     "cola": ("sentence", None),
@@ -80,7 +79,7 @@ class DataTrainingArguments:
         default=128,
         metadata={
             "help": "The maximum total input sequence length after tokenization. Sequences longer "
-            "than this will be truncated, sequences shorter will be padded."
+                    "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
@@ -90,28 +89,28 @@ class DataTrainingArguments:
         default=True,
         metadata={
             "help": "Whether to pad all samples to `max_seq_length`. "
-            "If False, will pad the samples dynamically when batching to the maximum length in the batch."
+                    "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
     max_train_samples: Optional[int] = field(
         default=None,
         metadata={
             "help": "For debugging purposes or quicker training, truncate the number of training examples to this "
-            "value if set."
+                    "value if set."
         },
     )
-    max_eval_samples: Optional[int] = field(
+    max_val_samples: Optional[int] = field(
         default=None,
         metadata={
-            "help": "For debugging purposes or quicker training, truncate the number of evaluation examples to this "
-            "value if set."
+            "help": "For debugging purposes or quicker training, truncate the number of validation examples to this "
+                    "value if set."
         },
     )
-    max_predict_samples: Optional[int] = field(
+    max_test_samples: Optional[int] = field(
         default=None,
         metadata={
-            "help": "For debugging purposes or quicker training, truncate the number of prediction examples to this "
-            "value if set."
+            "help": "For debugging purposes or quicker training, truncate the number of test examples to this "
+                    "value if set."
         },
     )
     train_file: Optional[str] = field(
@@ -134,7 +133,7 @@ class DataTrainingArguments:
             assert train_extension in ["csv", "json"], "`train_file` should be a csv or a json file."
             validation_extension = self.validation_file.split(".")[-1]
             assert (
-                validation_extension == train_extension
+                    validation_extension == train_extension
             ), "`validation_file` should have the same extension (csv or json) as `train_file`."
 
 
@@ -169,7 +168,7 @@ class ModelArguments:
         default=False,
         metadata={
             "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
-            "with private models)."
+                    "with private models)."
         },
     )
 
@@ -196,7 +195,7 @@ def main():
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
                 "Use --overwrite_output_dir to overcome."
             )
-        elif last_checkpoint is not None and training_args.resume_from_checkpoint is None:
+        elif last_checkpoint is not None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
                 "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
@@ -239,7 +238,7 @@ def main():
     # download the dataset.
     if data_args.task_name is not None:
         # Downloading and loading a dataset from the hub.
-        datasets = load_dataset("glue", data_args.task_name, cache_dir=model_args.cache_dir)
+        datasets = load_dataset("glue", data_args.task_name)
     else:
         # Loading a dataset from your local files.
         # CSV/JSON training and evaluation files are needed.
@@ -252,7 +251,7 @@ def main():
                 train_extension = data_args.train_file.split(".")[-1]
                 test_extension = data_args.test_file.split(".")[-1]
                 assert (
-                    test_extension == train_extension
+                        test_extension == train_extension
                 ), "`test_file` should have the same extension (csv or json) as `train_file`."
                 data_files["test"] = data_args.test_file
             else:
@@ -263,10 +262,10 @@ def main():
 
         if data_args.train_file.endswith(".csv"):
             # Loading a dataset from local csv files
-            datasets = load_dataset("csv", data_files=data_files, cache_dir=model_args.cache_dir)
+            datasets = load_dataset("csv", data_files=data_files)
         else:
             # Loading a dataset from local json files
-            datasets = load_dataset("json", data_files=data_files, cache_dir=model_args.cache_dir)
+            datasets = load_dataset("json", data_files=data_files)
     # See more about loading any type of standard or custom dataset at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
@@ -279,17 +278,8 @@ def main():
         else:
             num_labels = 1
     else:
-        # Trying to have good defaults here, don't hesitate to tweak to your needs.
-        is_regression = datasets["train"].features["label"].dtype in ["float32", "float64"]
-        if is_regression:
-            num_labels = 1
-        else:
-            # A useful fast method:
-            # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.unique
-            label_list = datasets["train"].unique("label")
-            label_list.sort()  # Let's sort it for determinism
-            num_labels = len(label_list)
-
+        num_labels = 2
+        is_regression = False
     # Load pretrained model and tokenizer
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
@@ -302,13 +292,16 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
-        cache_dir=model_args.cache_dir,
-        use_fast=model_args.use_fast_tokenizer,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
+    tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
+    tokenizer.add_special_tokens({
+        'bos_token': '<s>',
+        'eos_token': '</s>',
+        'sep_token': '</s>',
+        'cls_token': '<s>',
+        'unk_token': '<unk>',
+        'pad_token': '<pad>',
+        'mask_token': '<mask>',
+    })
     model = AutoModelForSequenceClassification.from_pretrained(
         model_args.model_name_or_path,
         from_tf=bool(".ckpt" in model_args.model_name_or_path),
@@ -342,25 +335,25 @@ def main():
     # Some models have set the order of the labels to use, so let's make sure we do use it.
     label_to_id = None
     if (
-        model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
-        and data_args.task_name is not None
-        and not is_regression
+            model.config.label2id != PretrainedConfig(num_labels=num_labels).label2id
+            and data_args.task_name is not None
+            and not is_regression
     ):
         # Some have all caps in their config, some don't.
         label_name_to_id = {k.lower(): v for k, v in model.config.label2id.items()}
         if list(sorted(label_name_to_id.keys())) == list(sorted(label_list)):
             label_to_id = {i: int(label_name_to_id[label_list[i]]) for i in range(num_labels)}
         else:
-            logger.warning(
+            logger.warn(
                 "Your model seems to have been trained with labels, but they don't match the dataset: ",
                 f"model labels: {list(sorted(label_name_to_id.keys()))}, dataset labels: {list(sorted(label_list))}."
                 "\nIgnoring the model labels as a result.",
             )
     elif data_args.task_name is None and not is_regression:
-        label_to_id = {v: i for i, v in enumerate(label_list)}
+        label_to_id = {0: 0, 1: 1}
 
     if data_args.max_seq_length > tokenizer.model_max_length:
-        logger.warning(
+        logger.warn(
             f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the"
             f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
         )
@@ -390,15 +383,15 @@ def main():
         if "validation" not in datasets and "validation_matched" not in datasets:
             raise ValueError("--do_eval requires a validation dataset")
         eval_dataset = datasets["validation_matched" if data_args.task_name == "mnli" else "validation"]
-        if data_args.max_eval_samples is not None:
-            eval_dataset = eval_dataset.select(range(data_args.max_eval_samples))
+        if data_args.max_val_samples is not None:
+            eval_dataset = eval_dataset.select(range(data_args.max_val_samples))
 
     if training_args.do_predict or data_args.task_name is not None or data_args.test_file is not None:
         if "test" not in datasets and "test_matched" not in datasets:
             raise ValueError("--do_predict requires a test dataset")
-        predict_dataset = datasets["test_matched" if data_args.task_name == "mnli" else "test"]
-        if data_args.max_predict_samples is not None:
-            predict_dataset = predict_dataset.select(range(data_args.max_predict_samples))
+        test_dataset = datasets["test_matched" if data_args.task_name == "mnli" else "test"]
+        if data_args.max_test_samples is not None:
+            test_dataset = test_dataset.select(range(data_args.max_test_samples))
 
     # Log a few random samples from the training set:
     if training_args.do_train:
@@ -408,6 +401,7 @@ def main():
     # Get the metric function
     if data_args.task_name is not None:
         metric = load_metric("glue", data_args.task_name)
+
     # TODO: When datasets metrics include regular accuracy, make an else here and remove special branch from
     # compute_metrics
 
@@ -445,26 +439,6 @@ def main():
         data_collator=data_collator,
     )
 
-    # Training
-    if training_args.do_train:
-        checkpoint = None
-        if training_args.resume_from_checkpoint is not None:
-            checkpoint = training_args.resume_from_checkpoint
-        elif last_checkpoint is not None:
-            checkpoint = last_checkpoint
-        train_result = trainer.train(resume_from_checkpoint=checkpoint)
-        metrics = train_result.metrics
-        max_train_samples = (
-            data_args.max_train_samples if data_args.max_train_samples is not None else len(train_dataset)
-        )
-        metrics["train_samples"] = min(max_train_samples, len(train_dataset))
-
-        trainer.save_model()  # Saves the tokenizer too for easy upload
-
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
-
     # Evaluation
     if training_args.do_eval:
         logger.info("*** Evaluate ***")
@@ -479,52 +453,11 @@ def main():
         for eval_dataset, task in zip(eval_datasets, tasks):
             metrics = trainer.evaluate(eval_dataset=eval_dataset)
 
-            max_eval_samples = (
-                data_args.max_eval_samples if data_args.max_eval_samples is not None else len(eval_dataset)
-            )
-            metrics["eval_samples"] = min(max_eval_samples, len(eval_dataset))
+            max_val_samples = data_args.max_val_samples if data_args.max_val_samples is not None else len(eval_dataset)
+            metrics["eval_samples"] = min(max_val_samples, len(eval_dataset))
 
             trainer.log_metrics("eval", metrics)
             trainer.save_metrics("eval", metrics)
-
-    if training_args.do_predict:
-        logger.info("*** Predict ***")
-
-        # Loop to handle MNLI double evaluation (matched, mis-matched)
-        tasks = [data_args.task_name]
-        predict_datasets = [predict_dataset]
-        if data_args.task_name == "mnli":
-            tasks.append("mnli-mm")
-            predict_datasets.append(datasets["test_mismatched"])
-
-        for predict_dataset, task in zip(predict_datasets, tasks):
-            # Removing the `label` columns because it contains -1 and Trainer won't like that.
-            predict_dataset.remove_columns_("label")
-            predictions = trainer.predict(predict_dataset, metric_key_prefix="predict").predictions
-            predictions = np.squeeze(predictions) if is_regression else np.argmax(predictions, axis=1)
-
-            output_predict_file = os.path.join(training_args.output_dir, f"predict_results_{task}.txt")
-            if trainer.is_world_process_zero():
-                with open(output_predict_file, "w") as writer:
-                    logger.info(f"***** Predict results {task} *****")
-                    writer.write("index\tprediction\n")
-                    for index, item in enumerate(predictions):
-                        if is_regression:
-                            writer.write(f"{index}\t{item:3.3f}\n")
-                        else:
-                            item = label_list[item]
-                            writer.write(f"{index}\t{item}\n")
-
-    if training_args.push_to_hub:
-        kwargs = {"finetuned_from": model_args.model_name_or_path, "tags": "text-classification"}
-        if data_args.task_name is not None:
-            kwargs["language"] = "en"
-            kwargs["dataset_tags"] = "glue"
-            kwargs["dataset_args"] = data_args.task_name
-            kwargs["dataset"] = f"GLUE {data_args.task_name.upper()}"
-
-        trainer.push_to_hub(**kwargs)
-
 
 def _mp_fn(index):
     # For xla_spawn (TPUs)

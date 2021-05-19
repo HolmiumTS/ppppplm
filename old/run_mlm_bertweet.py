@@ -324,6 +324,8 @@ def main():
         column_names = datasets["validation"].column_names
     text_column_name = "text" if "text" in column_names else column_names[0]
 
+    tokenizer.model_max_length = 128
+
     if data_args.max_seq_length is None:
         max_seq_length = tokenizer.model_max_length
         if max_seq_length > 1024:
