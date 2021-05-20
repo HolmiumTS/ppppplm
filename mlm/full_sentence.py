@@ -1,5 +1,5 @@
 from megatron.data.indexed_dataset import MMapIndexedDataset
-from transformers import GPT2TokenizerFast, RobertaTokenizerFast
+from transformers import GPT2TokenizerFast
 
 reverse_tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
 reverse_tokenizer.add_special_tokens({
@@ -60,32 +60,3 @@ class Dataset():
                     for x in res.keys():
                         res[x] += tmp[x][1:]
                 return res
-
-
-def main():
-    tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
-    tokenizer.add_special_tokens({
-        'bos_token': '<s>',
-        'eos_token': '</s>',
-        'sep_token': '</s>',
-        'cls_token': '<s>',
-        'unk_token': '<unk>',
-        'pad_token': '<pad>',
-        'mask_token': '<mask>',
-    })
-    train_dataset = Dataset(paths=['../../bin_data/{}_text_document'.format(i) for i in range(4)],
-                            tokenizer=tokenizer)
-    num = len(train_dataset)
-    res = train_dataset[0]
-    print(len(res['input_ids']))
-    print(tokenizer.decode(res['input_ids']))
-    res = train_dataset[num - 1]
-    print(len(res['input_ids']))
-    print(tokenizer.decode(res['input_ids']))
-    for i in range(num):
-        tt = train_dataset[i]
-        print(len(tt['input_ids']))
-
-
-if __name__ == '__main__':
-    main()

@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import transformers
-from dataset import Dataset
+from full_sentence import Dataset
 from transformers import (
     MODEL_FOR_MASKED_LM_MAPPING,
     CONFIG_MAPPING,
@@ -39,7 +39,9 @@ from transformers import (
     Trainer,
     TrainingArguments,
     set_seed,
-    GPT2TokenizerFast, AutoConfig
+    GPT2TokenizerFast,
+    RobertaTokenizerFast,
+    AutoConfig
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
@@ -247,7 +249,7 @@ def main():
     #     pad_token='<pad>',
     #     mask_token='<mask>',
     # )
-    tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
+    tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
     tokenizer.add_special_tokens({
         'bos_token': '<s>',
         'eos_token': '</s>',

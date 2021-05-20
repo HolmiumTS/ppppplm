@@ -29,17 +29,19 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import transformers
-from test_dataset import Dataset, DC
+from test_dataset import Dataset
 from transformers import (
     MODEL_FOR_MASKED_LM_MAPPING,
     CONFIG_MAPPING,
     AutoModelForMaskedLM,
-    # DataCollatorForLanguageModeling,
+    DataCollatorForLanguageModeling,
     HfArgumentParser,
     Trainer,
     TrainingArguments,
     set_seed,
-    GPT2TokenizerFast, AutoConfig
+    GPT2TokenizerFast,
+    RobertaTokenizerFast,
+    AutoConfig
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 from transformers.utils import check_min_version
@@ -247,7 +249,7 @@ def main():
     #     pad_token='<pad>',
     #     mask_token='<mask>',
     # )
-    tokenizer = GPT2TokenizerFast.from_pretrained('gpt2')
+    tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
     tokenizer.add_special_tokens({
         'bos_token': '<s>',
         'eos_token': '</s>',
@@ -278,7 +280,7 @@ def main():
 
     # Data collator
     # This one will take care of randomly masking the tokens.
-    data_collator = DC(tokenizer=tokenizer, mlm_probability=data_args.mlm_probability)
+    data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=data_args.mlm_probability)
 
     train_dataset = Dataset(paths=['../bin_data/{}_text_document'.format(i) for i in range(4)],
                             tokenizer=tokenizer)

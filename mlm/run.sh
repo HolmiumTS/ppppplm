@@ -1,12 +1,5 @@
 #!/bin/sh
 
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=16
-#SBATCH --job-name=bertweet
-#SBATCH --gres=gpu:rtx:1
-#SBATCH --output=out
-#SBATCH --get-user-env
-
 python ./mlm.py \
              --model_name_or_path roberta-base \
              --output_dir ../../bertweet-v1/ \
@@ -19,6 +12,7 @@ python ./mlm.py \
              --num_train_epochs 20 \
              --per_device_train_batch_size 6 \
              --per_device_eval_batch_size 6 \
+             --gradient_accumulation_steps 42 \
              --save_steps 5000 \
              --cache_dir ../../.cache \
              --evaluation_strategy epoch \
