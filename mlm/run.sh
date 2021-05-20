@@ -2,7 +2,7 @@
 
 python ./mlm.py \
              --model_name_or_path roberta-base \
-             --output_dir ../../bertweet-v1/ \
+             --output_dir ../../bertweet-v1.1/ \
              --seed 42 \
              --do_train \
              --do_eval \
@@ -13,7 +13,7 @@ python ./mlm.py \
              --per_device_train_batch_size 6 \
              --per_device_eval_batch_size 6 \
              --gradient_accumulation_steps 42 \
-             --save_steps 5000 \
+             --save_steps 500 \
              --cache_dir ../../.cache \
              --evaluation_strategy epoch \
              --fp16 \
