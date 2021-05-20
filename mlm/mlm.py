@@ -283,9 +283,8 @@ def main():
     # This one will take care of randomly masking the tokens.
     data_collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=data_args.mlm_probability)
 
-    train_dataset = Dataset(paths=['../bin_data/{}_text_document'.format(i) for i in range(30)], tokenizer=tokenizer)
-    eval_dataset = Dataset(paths='../bin_data/30_text_document', tokenizer=tokenizer)
-
+    train_dataset = Dataset(paths=['../../bin_data/{}_text_document'.format(i) for i in range(31)], tokenizer=tokenizer)
+    eval_dataset = None
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
