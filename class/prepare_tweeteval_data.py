@@ -1,5 +1,5 @@
 import os
-from old.normal import BertweetTokenizer
+from normal import BertweetTokenizer
 import csv
 
 TASKS = [
