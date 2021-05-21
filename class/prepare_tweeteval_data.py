@@ -1,5 +1,5 @@
 import os
-from old.normal import BertweetTokenizer
+from normal import BertweetTokenizer
 import csv
 
 TASKS = [
@@ -22,6 +22,9 @@ ttt = BertweetTokenizer()
 
 
 def preprocess(labels, text, output):
+    print('labels: ',labels)
+    print('text: ',text)
+    print('output: ',output)
     lf = open(labels, 'r').readlines()
     tf = open(text, 'r').readlines()
     of = open(output, 'w')
@@ -32,6 +35,8 @@ def preprocess(labels, text, output):
     fileheader = ['label', 'text']
     outDictWriter = csv.DictWriter(of, fileheader)
     outDictWriter.writeheader()
+    outDictWriter.writerows(dt)
+    of.close()
 
 
 def main():
@@ -42,11 +47,15 @@ def main():
                 for s in ['train', 'val']:
                     labels = os.path.join('../ds/tweeteval/datasets/', task, st, s + '_labels.txt')
                     text = os.path.join('../ds/tweeteval/datasets/', task, st, s + '_text.txt')
-                    output = os.path.join('../ds/tweeteval/datasets/', task, st, s + '.txt')
+                    output = os.path.join('../ds/tweeteval/datasets/', task, st, s + '.csv')
                     preprocess(labels, text, output)
         else:
             for s in ['train', 'val']:
                 run_args['labels'] = os.path.join('../ds/tweeteval/datasets/', task, s + '_labels.txt')
                 run_args['text'] = os.path.join('../ds/tweeteval/datasets/', task, s + '_text.txt')
-                run_args['output'] = os.path.join('../ds/tweeteval/datasets/', task, s + '.txt')
+                run_args['output'] = os.path.join('../ds/tweeteval/datasets/', task, s + '.csv')
                 preprocess(**run_args)
+
+if __name__ == '__main__':
+    main()
+

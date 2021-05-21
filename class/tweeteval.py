@@ -43,10 +43,14 @@ def main():
             for st in STANCE_TASKS:
                 run_args['train_file'] = os.path.join('../ds/tweeteval/datasets/', task, st, 'train.csv')
                 run_args['validation_file'] = os.path.join('../ds/tweeteval/datasets/', task, st, 'val.csv')
-                run_args['output_dir'] = os.path.join('../../', run_args['model_name_or_path'], task, st + '.txt')
+                run_args['output_dir'] = os.path.join('../../', run_args['model_name_or_path'], task, st) + '/'
                 train(args=run_args)
         else:
             run_args['train_file'] = os.path.join('../ds/tweeteval/datasets/', task, 'train.csv')
             run_args['validation_file'] = os.path.join('../ds/tweeteval/datasets/', task, 'val.csv')
-            run_args['output_dir'] = os.path.join('../../', run_args['model_name_or_path'], task + '.txt')
+            run_args['output_dir'] = os.path.join('../../', run_args['model_name_or_path'], task) + '/'
             train(args=run_args)
+
+
+if __name__ == '__main__':
+    main()
