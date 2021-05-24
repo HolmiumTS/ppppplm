@@ -34,19 +34,20 @@ def predict(args):
 
 
 def main():
-    root = sys.argv[1]
+    root = sys.argv[2]
+    model = sys.argv[1]
     run_args = {}
     for task in TASKS:
         if task == 'stance':
             for st in STANCE_TASKS:
                 run_args['test_file'] = os.path.join('../ds/tweeteval/datasets/', task, st, 'test.csv')
-                run_args['model_name_or_path'] = os.path.join('../../', run_args['model_name_or_path'], task, st) + '/'
+                run_args['model_name_or_path'] = os.path.join('../../', model, task, st) + '/'
                 run_args['output_dir'] = os.path.join(root, task)
                 run_args['task_name'] = st
                 predict(args=run_args)
         else:
             run_args['test_file'] = os.path.join('../ds/tweeteval/datasets/', task, 'test.csv')
-            run_args['model_name_or_path'] = os.path.join('../../', run_args['model_name_or_path'], task) + '/'
+            run_args['model_name_or_path'] = os.path.join('../../', model, task) + '/'
             run_args['output_dir'] = os.path.join(root)
             run_args['task_name'] = task
             predict(args=run_args)
