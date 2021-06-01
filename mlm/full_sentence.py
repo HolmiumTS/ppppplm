@@ -35,7 +35,7 @@ class Dataset():
             if self.acc[p] > idx:
                 idx = idx if p == 0 else idx - self.acc[p]
                 np_array = self.multi_dataset[p][idx][:-1]
-                res = self.tokenizer(self.tokenizer.decode(np_array),
+                res = self.tokenizer(reverse_tokenizer.decode(np_array),
                                      padding=True,
                                      truncation=True,
                                      max_length=MAX_LEN,
@@ -49,7 +49,7 @@ class Dataset():
                     else:
                         idx += 1
                     np_array = self.multi_dataset[p][idx][:-1]
-                    tmp = self.tokenizer(self.tokenizer.decode(np_array),
+                    tmp = self.tokenizer(reverse_tokenizer.decode(np_array),
                                          padding=True,
                                          truncation=True,
                                          max_length=MAX_LEN,

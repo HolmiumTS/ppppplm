@@ -31,7 +31,8 @@ def preprocess(labels, text, output):
     dt = []
     ll = len(lf)
     for i in range(ll):
-        dt.append({'label': lf[i][:-1], 'text': ttt.normalizeTweet(tf[i][:-1])})
+        if len(ttt.normalizeTweet(tf[i][:-1])) > 0:
+            dt.append({'label': lf[i][:-1], 'text': ttt.normalizeTweet(tf[i][:-1])})
     fileheader = ['label', 'text']
     outDictWriter = csv.DictWriter(of, fileheader)
     outDictWriter.writeheader()
